@@ -27,6 +27,10 @@
 
 #include "common/ustr.h"
 
+#define RIVEN_SCALE 2.5f
+#define RIVEN_WIDTH (608 * RIVEN_SCALE)
+#define RIVEN_HEIGHT 1080
+
 namespace Graphics {
 class Font;
 }
@@ -99,7 +103,7 @@ public:
 	void updateEffects();
 
 	// Transitions
-	void scheduleTransition(RivenTransition id, const Common::Rect &rect = Common::Rect(0, 0, 608, 392));
+	void scheduleTransition(RivenTransition id, const Common::Rect &rect = Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE));
 	void runScheduledTransition();
 	void fadeToBlack();
 	void setTransitionMode(RivenTransitionMode mode);

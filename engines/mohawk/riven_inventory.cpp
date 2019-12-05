@@ -36,13 +36,13 @@ RivenInventory::RivenInventory(MohawkEngine_Riven *vm) :
 		_forceVisible(false),
 		_forceHidden(false) {
 
-	_atrusJournalRect1 = Common::Rect(295, 402, 313, 426);
-	_atrusJournalRect2 = Common::Rect(259, 402, 278, 426);
-	_cathJournalRect2 = Common::Rect(328, 408, 348, 419);
-	_atrusJournalRect3 = Common::Rect(222, 402, 240, 426);
-	_cathJournalRect3 = Common::Rect(291, 408, 311, 419);
-	_trapBookRect3 = Common::Rect(363, 396, 386, 432);
-	_demoExitRect = Common::Rect(291, 408, 317, 419);
+	_atrusJournalRect1 = Common::Rect(295 * RIVEN_SCALE, 402 * RIVEN_SCALE, 313 * RIVEN_SCALE, 426 * RIVEN_SCALE);
+	_atrusJournalRect2 = Common::Rect(259 * RIVEN_SCALE, 402 * RIVEN_SCALE, 278 * RIVEN_SCALE, 426 * RIVEN_SCALE);
+	_cathJournalRect2 = Common::Rect(328 * RIVEN_SCALE, 408 * RIVEN_SCALE, 348 * RIVEN_SCALE, 419 * RIVEN_SCALE);
+	_atrusJournalRect3 = Common::Rect(222 * RIVEN_SCALE, 402 * RIVEN_SCALE, 240 * RIVEN_SCALE, 426 * RIVEN_SCALE);
+	_cathJournalRect3 = Common::Rect(291 * RIVEN_SCALE, 408 * RIVEN_SCALE, 311 * RIVEN_SCALE, 419 * RIVEN_SCALE);
+	_trapBookRect3 = Common::Rect(363 * RIVEN_SCALE, 396 * RIVEN_SCALE, 386 * RIVEN_SCALE, 432 * RIVEN_SCALE);
+	_demoExitRect = Common::Rect(291 * RIVEN_SCALE, 408 * RIVEN_SCALE, 317 * RIVEN_SCALE, 419 * RIVEN_SCALE);
 }
 
 RivenInventory::~RivenInventory() {
@@ -83,7 +83,7 @@ void RivenInventory::draw() {
 
 void RivenInventory::clearArea() {
 	// Clear the inventory area
-	static const Common::Rect inventoryRect = Common::Rect(0, 392, 608, 436);
+	static const Common::Rect inventoryRect = Common::Rect(0, 392 * RIVEN_SCALE, 608 * RIVEN_SCALE, 436 * RIVEN_SCALE);
 
 	// Lock the screen
 	Graphics::Surface *screen = _vm->_system->lockScreen();
@@ -195,7 +195,7 @@ bool RivenInventory::isVisible() const {
 		return false;
 
 	Common::Point mouse = _vm->getStack()->getMousePosition();
-	return mouse.y >= 392;
+	return mouse.y >= 392 * RIVEN_SCALE;
 }
 
 void RivenInventory::onFrame() {

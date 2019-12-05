@@ -255,7 +255,7 @@ void RivenCard::applyPropertiesPatch2E76(uint32 globalId) {
 		Picture blackPicture;
 		blackPicture.index = 6;
 		blackPicture.id = 117;
-		blackPicture.rect = Common::Rect(608, 392);
+		blackPicture.rect = Common::Rect(608 * RIVEN_SCALE, 392 * RIVEN_SCALE);
 		_pictureList.push_back(blackPicture);
 
 		debugC(kRivenDebugPatches, "Applied invalid card change during screen update (1/2) to card %x", globalId);
@@ -403,8 +403,8 @@ void RivenCard::applyPropertiesPatchE2E(uint32 globalId) {
 	// The main menu in the Myst 25th anniversary version is patched to include new items:
 	//   - Save game
 	if (globalId == 0xE2E) {
-		moveHotspot(   22, Common::Rect(470, 175, 602, 190)); // Setup
-		moveHotspot(   16, Common::Rect(470, 201, 602, 216)); // New game
+		moveHotspot(   22, Common::Rect(470 * RIVEN_SCALE, 175 * RIVEN_SCALE, 602 * RIVEN_SCALE, 190 * RIVEN_SCALE)); // Setup
+		moveHotspot(   16, Common::Rect(470 * RIVEN_SCALE, 201 * RIVEN_SCALE, 602 * RIVEN_SCALE, 216 * RIVEN_SCALE)); // New game
 		addMenuHotspot(23, Common::Rect(470, 227, 602, 242), 3, RivenStacks::ASpit::kExternalRestoreGame, "xarestoregame");
 		addMenuHotspot(24, Common::Rect(470, 256, 602, 271), 4, RivenStacks::ASpit::kExternalSaveGame,    "xaSaveGame");
 		addMenuHotspot(25, Common::Rect(470, 283, 602, 300), 5, RivenStacks::ASpit::kExternalResume,      "xaResumeGame");
@@ -484,7 +484,7 @@ void RivenCard::addMenuHotspot(uint16 blstId, const Common::Rect &position, uint
                                uint16 externalCommandNameId, const char *externalCommandName) {
 	RivenHotspot *existingHotspot = getHotspotByBlstId(blstId);
 	if (existingHotspot) {
-		moveHotspot(blstId, position);
+		moveHotspot(blstId, Common::Rect(position.left * RIVEN_SCALE, position.top * RIVEN_SCALE, position.right * RIVEN_SCALE, position.bottom * RIVEN_SCALE));
 		return; // Don't add the hotspot if it already exists
 	}
 
@@ -612,10 +612,10 @@ void RivenCard::loadCardPictureList(uint16 id) {
 		Picture &picture = _pictureList[i];
 		picture.index = plst->readUint16BE();
 		picture.id = plst->readUint16BE();
-		picture.rect.left = plst->readUint16BE();
-		picture.rect.top = plst->readUint16BE();
-		picture.rect.right = plst->readUint16BE();
-		picture.rect.bottom = plst->readUint16BE();
+		picture.rect.left = plst->readUint16BE() * RIVEN_SCALE;
+		picture.rect.top = plst->readUint16BE() * RIVEN_SCALE;
+		picture.rect.right = plst->readUint16BE() * RIVEN_SCALE;
+		picture.rect.bottom = plst->readUint16BE() * RIVEN_SCALE;
 	}
 
 	delete plst;
@@ -1026,8 +1026,8 @@ void RivenCard::loadCardMovieList(uint16 id) {
 		mlstRecord.index = mlstStream->readUint16BE();
 		mlstRecord.movieID = mlstStream->readUint16BE();
 		mlstRecord.playbackSlot = mlstStream->readUint16BE();
-		mlstRecord.left = mlstStream->readUint16BE();
-		mlstRecord.top = mlstStream->readUint16BE();
+		mlstRecord.left = mlstStream->readUint16BE() * RIVEN_SCALE;
+		mlstRecord.top = mlstStream->readUint16BE() * RIVEN_SCALE;
 		mlstRecord.lowBoundTime = mlstStream->readUint16BE();
 		mlstRecord.startTime = mlstStream->readUint16BE();
 		mlstRecord.highBoundTime = mlstStream->readUint16BE();
@@ -1158,10 +1158,10 @@ void RivenHotspot::loadFromStream(Common::ReadStream *stream) {
 	_blstID = stream->readUint16BE();
 	_nameResource = stream->readSint16BE();
 
-	int16 left = stream->readSint16BE();
-	int16 top = stream->readSint16BE();
-	int16 right = stream->readSint16BE();
-	int16 bottom = stream->readSint16BE();
+	int16 left = stream->readSint16BE() * RIVEN_SCALE;
+	int16 top = stream->readSint16BE() * RIVEN_SCALE;
+	int16 right = stream->readSint16BE() * RIVEN_SCALE;
+	int16 bottom = stream->readSint16BE() * RIVEN_SCALE;
 
 	// Riven has some invalid rects, disable them here
 	// Known weird hotspots:

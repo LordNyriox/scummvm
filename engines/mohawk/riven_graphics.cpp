@@ -329,15 +329,15 @@ RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) :
 
 	// Restrict ourselves to a single pixel format to simplify the effects implementation
 	_pixelFormat = Graphics::createPixelFormat<565>();
-	initGraphics(608, 436, &_pixelFormat);
+	initGraphics(RIVEN_WIDTH, RIVEN_HEIGHT, &_pixelFormat);
 
 	// The actual game graphics only take up the first 392 rows. The inventory
 	// occupies the rest of the screen and we don't use the buffer to hold that.
 	_mainScreen = new Graphics::Surface();
-	_mainScreen->create(608, 392, _pixelFormat);
+	_mainScreen->create(RIVEN_WIDTH, RIVEN_HEIGHT, _pixelFormat);
 
 	_effectScreen = new Graphics::Surface();
-	_effectScreen->create(608, 392, _pixelFormat);
+	_effectScreen->create(RIVEN_WIDTH, RIVEN_HEIGHT, _pixelFormat);
 
 	loadMenuFont();
 }
@@ -365,8 +365,8 @@ void RivenGraphics::copyImageToScreen(uint16 image, uint32 left, uint32 top, uin
 	beginScreenUpdate();
 
 	// Clip the width to fit on the screen. Fixes some images.
-	if (left + surface->w > 608)
-		surface->w = 608 - left;
+	if (left + surface->w > 608 * RIVEN_SCALE)
+		surface->w = 608 * RIVEN_SCALE - left;
 
 	for (uint16 i = 0; i < surface->h; i++)
 		memcpy(_mainScreen->getBasePtr(left, i + top), surface->getBasePtr(0, i), surface->w * surface->format.bytesPerPixel);
@@ -380,7 +380,7 @@ void RivenGraphics::updateScreen() {
 		// Copy to screen if there's no transition. Otherwise transition.
 		if (_scheduledTransition == kRivenTransitionNone
 		    || _transitionMode == kRivenTransitionModeDisabled) {
-			const Common::Rect updateRect = Common::Rect(0, 0, 608, 392);
+			const Common::Rect updateRect = Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE);
 
 			// mainScreen -> effectScreen -> systemScreen
 			_effectScreen->copyRectToSurface(*_mainScreen, updateRect.left, updateRect.top, updateRect);
@@ -593,7 +593,7 @@ void RivenGraphics::runScheduledTransition() {
 }
 
 void RivenGraphics::clearMainScreen() {
-	_mainScreen->fillRect(Common::Rect(0, 0, 608, 392), _pixelFormat.RGBToColor(0, 0, 0));
+	_mainScreen->fillRect(Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE), _pixelFormat.RGBToColor(0, 0, 0));
 }
 
 void RivenGraphics::fadeToBlack() {
@@ -862,7 +862,7 @@ FliesEffect::FliesEffect(MohawkEngine_Riven *vm, uint16 count, bool fireflies) :
 
 	_effectSurface = _vm->_gfx->getEffectScreen();
 	_backSurface = _vm->_gfx->getBackScreen();
-	_gameRect = Common::Rect(608, 392);
+	_gameRect = Common::Rect(608 * RIVEN_SCALE, 392 * RIVEN_SCALE);
 
 	if (fireflies) {
 		_parameters = &_firefliesParameters;
