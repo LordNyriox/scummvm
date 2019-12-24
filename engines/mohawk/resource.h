@@ -133,10 +133,12 @@ public:
 	virtual bool openStream(Common::SeekableReadStream *stream) = 0;
 	void close();
 
+	Common::String getFileName() const { return _fileName; }
 	bool isOpen() const { return _stream != 0; }
 
 	bool hasResource(uint32 tag, uint16 id) const;
 	bool hasResource(uint32 tag, const Common::String &resName) const;
+	Common::String getReplacementPath(uint32 tag, uint16 id);
 	Common::SeekableReadStream *getResource(uint32 tag, uint16 id);
 	uint32 getOffset(uint32 tag, uint16 id) const;
 	uint16 findResourceID(uint32 tag, const Common::String &resName) const;
@@ -148,6 +150,7 @@ public:
 	/** Offset the resource ids for a resource type by the specified amount */
 	void offsetResourceIDs(uint32 type, uint16 startId, int16 increment);
 protected:
+	Common::String _fileName;
 	Common::SeekableReadStream *_stream;
 
 	struct Resource {

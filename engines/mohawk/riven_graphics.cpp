@@ -37,6 +37,8 @@
 #include "graphics/fonts/ttf.h"
 #include "graphics/colormasks.h"
 
+#include "image/jpeg.h"
+
 namespace Mohawk {
 
 class TransitionEffect {
@@ -282,23 +284,23 @@ public:
 
 			uint alpha = elapsed * 255 / _duration;
 			for (uint y = 0; y < _mainScreen->h; y++) {
-				uint16 *src1 = (uint16 *) _mainScreen->getBasePtr(0, y);
-				uint16 *src2 = (uint16 *) _effectScreen->getBasePtr(0, y);
-				uint16 *dst = (uint16 *) screen->getBasePtr(0, y);
+				uint32 *src1 = (uint32 *) _mainScreen->getBasePtr(0, y);
+				uint32 *src2 = (uint32 *) _effectScreen->getBasePtr(0, y);
+				uint32 *dst = (uint32 *) screen->getBasePtr(0, y);
 				for (uint x = 0; x < _mainScreen->w; x++) {
 					uint8 r1, g1, b1, r2, g2, b2;
-					Graphics::colorToRGB< Graphics::ColorMasks<565> >(*src1++, r1, g1, b1);
-					Graphics::colorToRGB< Graphics::ColorMasks<565> >(*src2++, r2, g2, b2);
+					Graphics::colorToRGB< Graphics::ColorMasks<888> >(*src1++, r1, g1, b1);
+					Graphics::colorToRGB< Graphics::ColorMasks<888> >(*src2++, r2, g2, b2);
 
-					uint r = r1 * alpha + r2 * (255 - alpha);
-					uint g = g1 * alpha + g2 * (255 - alpha);
-					uint b = b1 * alpha + b2 * (255 - alpha);
+					uint32 r = r1 * alpha + r2 * (255 - alpha);
+					uint32 g = g1 * alpha + g2 * (255 - alpha);
+					uint32 b = b1 * alpha + b2 * (255 - alpha);
 
 					r /= 255;
 					g /= 255;
 					b /= 255;
 
-					*dst++ = (uint16) Graphics::RGBToColor< Graphics::ColorMasks<565> >(r, g, b);
+					*dst++ = (uint32) Graphics::RGBToColor< Graphics::ColorMasks<888> >(r, g, b);
 				}
 			}
 
@@ -328,7 +330,7 @@ RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) :
 	_bitmapDecoder = new MohawkBitmap();
 
 	// Restrict ourselves to a single pixel format to simplify the effects implementation
-	_pixelFormat = Graphics::createPixelFormat<565>();
+	_pixelFormat = Graphics::createPixelFormat<888>();
 	initGraphics(RIVEN_WIDTH, RIVEN_HEIGHT, &_pixelFormat);
 
 	// The actual game graphics only take up the first 392 rows. The inventory
@@ -354,9 +356,16 @@ RivenGraphics::~RivenGraphics() {
 }
 
 MohawkSurface *RivenGraphics::decodeImage(uint16 id) {
-	MohawkSurface *surface = _bitmapDecoder->decodeImage(_vm->getResource(ID_TBMP, id));
-	surface->convertToTrueColor();
-	return surface;
+	Image::JPEGDecoder jpg;
+	jpg.setOutputPixelFormat(g_system->getScreenFormat());
+	Common::SeekableReadStream *resource = _vm->getResource(ID_TBMP, id);
+	jpg.loadStream(*resource);
+	
+	const Graphics::Surface *source = jpg.getSurface();
+	Graphics::Surface *surface = new Graphics::Surface();
+	surface->copyFrom(*source);
+	MohawkSurface *mohawkSurface = new MohawkSurface(surface, nullptr, 0, 0);
+	return mohawkSurface;
 }
 
 void RivenGraphics::copyImageToScreen(uint16 image, uint32 left, uint32 top, uint32 right, uint32 bottom) {
@@ -593,7 +602,7 @@ void RivenGraphics::runScheduledTransition() {
 }
 
 void RivenGraphics::clearMainScreen() {
-	_mainScreen->fillRect(Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE), _pixelFormat.RGBToColor(0, 0, 0));
+	_mainScreen->fillRect(Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE), _pixelFormat.RGBToColor(255, 254, 0));
 }
 
 void RivenGraphics::fadeToBlack() {
