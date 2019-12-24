@@ -425,10 +425,10 @@ WaterEffect::WaterEffect(MohawkEngine_Riven *vm, uint16 sfxeID) :
 	// Read in header info
 	uint16 frameCount = sfxeStream->readUint16BE();
 	uint32 offsetTablePosition = sfxeStream->readUint32BE();
-	_rect.left = sfxeStream->readUint16BE();
-	_rect.top = sfxeStream->readUint16BE();
-	_rect.right = sfxeStream->readUint16BE();
-	_rect.bottom = sfxeStream->readUint16BE();
+	_rect.left = sfxeStream->readUint16BE() * RIVEN_SCALE;
+	_rect.top = sfxeStream->readUint16BE() * RIVEN_SCALE;
+	_rect.right = sfxeStream->readUint16BE() * RIVEN_SCALE;
+	_rect.bottom = sfxeStream->readUint16BE() * RIVEN_SCALE;
 	_speed = sfxeStream->readUint16BE();
 	// Skip the rest of the fields...
 
@@ -468,19 +468,27 @@ void WaterEffect::update() {
 
 	// Run script
 	uint16 curRow = 0;
+	bool isOddRow = false;
 	for (uint16 op = script->readUint16BE(); op != 4; op = script->readUint16BE()) {
 		if (op == 1) {        // Increment Row
-			curRow++;
+			curRow += 2;
+			if (isOddRow) {
+				curRow++;
+			}
+			isOddRow = !isOddRow;
 		} else if (op == 3) { // Copy Pixels
-			uint16 dstLeft = script->readUint16BE();
-			uint16 srcLeft = script->readUint16BE();
-			uint16 srcTop = script->readUint16BE();
-			uint16 rowWidth = script->readUint16BE();
+			uint16 dstLeft = script->readUint16BE() * RIVEN_SCALE;
+			uint16 srcLeft = script->readUint16BE() * RIVEN_SCALE;
+			uint16 srcTop = script->readUint16BE() * RIVEN_SCALE;
+			uint16 rowWidth = script->readUint16BE() * RIVEN_SCALE;
+			uint16 rowHeight = !isOddRow ? 2 : 3;
 
-			byte *src = (byte *)mainScreen->getBasePtr(srcLeft, srcTop);
-			byte *dst = (byte *)screen->getBasePtr(dstLeft, curRow + _rect.top);
+			for (int offset = 0; offset < rowHeight; offset++) {
+				byte *src = (byte *)mainScreen->getBasePtr(srcLeft, srcTop + offset);
+				byte *dst = (byte *)screen->getBasePtr(dstLeft, curRow + _rect.top + offset);
 
-			memcpy(dst, src, rowWidth * screen->format.bytesPerPixel);
+				memcpy(dst, src, rowWidth * screen->format.bytesPerPixel);
+			}
 		} else if (op != 4) { // End of Script
 			error ("Unknown SFXE opcode %d", op);
 		}
