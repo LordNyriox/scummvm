@@ -85,7 +85,7 @@ Common::String Archive::getReplacementPath(uint32 tag, uint16 id) {
 	char *ext;
 	switch (tag) {
 		case ID_TBMP:
-			ext = "jpg";
+			ext = "png";
 			break;
 		case ID_TMOV:
 			ext = "mp4";
@@ -108,8 +108,9 @@ Common::SeekableReadStream *Archive::getResource(uint32 tag, uint16 id) {
 	if (tag == ID_TBMP) {
 		Common::String replacementPath = getReplacementPath(tag, id);
 		Common::File *f = new Common::File();
-		bool replace = f->open(Common::FSNode(replacementPath));
-		if (replace) return f;
+		bool exists = f->open(Common::FSNode(replacementPath));
+		if (!exists) error("Missing image: %s", replacementPath.c_str());
+		return f;
 	}
 
 	const Resource &res = resMap[id];

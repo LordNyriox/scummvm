@@ -37,7 +37,7 @@
 #include "graphics/fonts/ttf.h"
 #include "graphics/colormasks.h"
 
-#include "image/jpeg.h"
+#include "image/png.h"
 
 namespace Mohawk {
 
@@ -330,7 +330,7 @@ RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) :
 	_bitmapDecoder = new MohawkBitmap();
 
 	// Restrict ourselves to a single pixel format to simplify the effects implementation
-	_pixelFormat = Graphics::createPixelFormat<888>();
+	_pixelFormat = Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
 	initGraphics(RIVEN_WIDTH, RIVEN_HEIGHT, &_pixelFormat);
 
 	// The actual game graphics only take up the first 392 rows. The inventory
@@ -356,12 +356,11 @@ RivenGraphics::~RivenGraphics() {
 }
 
 MohawkSurface *RivenGraphics::decodeImage(uint16 id) {
-	Image::JPEGDecoder jpg;
-	jpg.setOutputPixelFormat(g_system->getScreenFormat());
+	Image::PNGDecoder png;
 	Common::SeekableReadStream *resource = _vm->getResource(ID_TBMP, id);
-	jpg.loadStream(*resource);
+	png.loadStream(*resource);
 	
-	const Graphics::Surface *source = jpg.getSurface();
+	const Graphics::Surface *source = png.getSurface();
 	Graphics::Surface *surface = new Graphics::Surface();
 	surface->copyFrom(*source);
 	MohawkSurface *mohawkSurface = new MohawkSurface(surface, nullptr, 0, 0);
@@ -515,15 +514,15 @@ void RivenGraphics::setTransitionMode(RivenTransitionMode mode) {
 	_transitionMode = mode;
 	switch (_transitionMode) {
 		case kRivenTransitionModeFastest:
-			_transitionFrames   = 8;
+			_transitionFrames   = 4;
 			_transitionDuration = 300;
 			break;
 		case kRivenTransitionModeNormal:
-			_transitionFrames   = 16;
+			_transitionFrames   = 8;
 			_transitionDuration = 500;
 			break;
 		case kRivenTransitionModeBest:
-			_transitionFrames   = 32;
+			_transitionFrames   = 16;
 			_transitionDuration = 700;
 			break;
 		case kRivenTransitionModeDisabled:
@@ -622,13 +621,15 @@ void RivenGraphics::fadeToBlack() {
 }
 
 void RivenGraphics::drawExtrasImageToScreen(uint16 id, const Common::Rect &rect) {
-	MohawkSurface *mhkSurface = _bitmapDecoder->decodeImage(_vm->getExtrasResource(ID_TBMP, id));
-	mhkSurface->convertToTrueColor();
-	Graphics::Surface *surface = mhkSurface->getSurface();
+	Image::PNGDecoder png;
+	Common::SeekableReadStream *resource = _vm->getExtrasResource(ID_TBMP, id);
+	png.loadStream(*resource);
+	
+	const Graphics::Surface *source = png.getSurface();
+	Graphics::Surface *surface = new Graphics::Surface();
+	surface->copyFrom(*source);
 
 	_vm->_system->copyRectToScreen(surface->getPixels(), surface->pitch, rect.left, rect.top, surface->w, surface->h);
-
-	delete mhkSurface;
 }
 
 void RivenGraphics::drawRect(const Common::Rect &rect, bool active) {
