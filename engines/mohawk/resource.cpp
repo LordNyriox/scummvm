@@ -88,7 +88,7 @@ Common::String Archive::getReplacementPath(uint32 tag, uint16 id) {
 			ext = "png";
 			break;
 		case ID_TMOV:
-			ext = "mp4";
+			ext = "mov";
 			break;
 		default:
 			ext = "bin";
@@ -105,7 +105,7 @@ Common::SeekableReadStream *Archive::getResource(uint32 tag, uint16 id) {
 	if (!resMap.contains(id))
 		error("Archive does not contain '%s' %04x", tag2str(tag), id);
 	
-	if (tag == ID_TBMP) {
+	if (tag == ID_TBMP || (tag == ID_TMOV && id == 0)) {
 		Common::String replacementPath = getReplacementPath(tag, id);
 		Common::File *f = new Common::File();
 		bool exists = f->open(Common::FSNode(replacementPath));

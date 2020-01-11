@@ -673,10 +673,7 @@ int QuickTimeParser::readSTCO(Atom atom) {
 		return -1;
 
 	for (uint32 i = 0; i < track->chunkCount; i++) {
-		// WORKAROUND/HACK: The offsets in Riven videos (ones inside the Mohawk archives themselves)
-		// have offsets relative to the archive and not the video. This is quite nasty. We subtract
-		// the initial offset of the stream to get the correct value inside of the stream.
-		track->chunkOffsets[i] = _fd->readUint32BE() - _beginOffset;
+		track->chunkOffsets[i] = _fd->readUint32BE();
 	}
 
 	return 0;
