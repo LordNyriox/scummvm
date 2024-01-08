@@ -81,7 +81,7 @@ bool Archive::hasResource(uint32 tag, const Common::String &resName) const {
 }
 
 Common::String Archive::getReplacementPath(uint32 tag, uint16 id) {
-	char *ext;
+	const char *ext;
 	switch (tag) {
 		case ID_TBMP:
 			ext = "png";
