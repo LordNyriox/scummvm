@@ -77,21 +77,26 @@ jobs:
         with:
           name: scummvm-${{ matrix.arch }}
           path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.exe
+      - name: Upload scummvm
+        uses: actions/upload-artifact@v4
+        with:
+          name: scummvm-${{ matrix.arch }}
+          path: build-scummvm/**/*.dll
       - name: Upload scummvm libs
         uses: actions/upload-artifact@v4
         with:
           name: scummvm-${{ matrix.arch }}
-          path: ${{ env.VCPKG_INSTALLED_DIR }}/**/*.dll
+          path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}\\**\\*.dll
       - name: Upload scummvm symbols
         uses: actions/upload-artifact@v4
         with:
           name: symbols-${{ matrix.arch }}
-          path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.pdb
+          path: build-scummvm/**/*.pdb
       - name: Upload scummvm libs symbols
         uses: actions/upload-artifact@v4
         with:
           name: symbols-${{ matrix.arch }}
-          path: ${{ env.VCPKG_INSTALLED_DIR }}/**/*.pdb
+          path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}\\**\\*.pdb
   xcode:
     name: Xcode
     runs-on: macos-latest
