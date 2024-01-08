@@ -26,7 +26,7 @@ jobs:
             triplet: arm64-windows
             configFlags: --enable-discord --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx --disable-opengl
     env:
-      CONFIGURATION: Debug
+      CONFIGURATION: Release
       PLATFORM: ${{ matrix.platform }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       VCPKG_FEATURE_FLAGS: dependencygraph
@@ -36,7 +36,7 @@ jobs:
       contents: write # For dependencygraph
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: ilammy/setup-nasm@v1
         if: ${{ matrix.useNasm }} == 'true'
       - name: Install vcpkg
@@ -48,8 +48,7 @@ jobs:
         run: |
           ${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}/vcpkg integrate install
       - name: Upload libs
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.buildArtifacts }} == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: libs-${{ matrix.triplet }}
           path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}
@@ -74,26 +73,22 @@ jobs:
           ls
           msbuild scummvm.sln /m /p:VcpkgEnableManifest=true /p:BuildInParallel=true /p:Configuration=${{ env.CONFIGURATION }} /p:PreferredToolArchitecture=x64 /p:Platform=${{ matrix.platform }} /v:minimal
       - name: Upload scummvm
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.buildArtifacts }} == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: scummvm-${{ matrix.arch }}
           path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.exe
       - name: Upload scummvm libs
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.buildArtifacts }} == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: scummvm-${{ matrix.arch }}
           path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}\\bin\\*.dll
       - name: Upload scummvm symbols
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.buildArtifacts }} == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: symbols-${{ matrix.arch }}
           path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.pdb
       - name: Upload scummvm libs symbols
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.buildArtifacts }} == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: symbols-${{ matrix.arch }}
           path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}\\bin\\*.pdb
@@ -121,7 +116,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install packages
         if: ${{ matrix.brewPackages }}
         run: brew install ${{ matrix.brewPackages }}
@@ -172,7 +167,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Add Ubuntu Xenial package sources
         if: matrix.platform == 'ubuntu-20.04'
         run: |
