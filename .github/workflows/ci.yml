@@ -15,16 +15,16 @@ jobs:
           - platform: win32
             triplet: x86-windows
             arch: x86
-            configFlags: --enable-discord --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx
+            configFlags: --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx
             useNasm: 'true'
           - platform: x64
             arch: x64
             triplet: x64-windows
-            configFlags: --enable-discord --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx
+            configFlags: --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx
           - platform: arm64
             arch: arm64
             triplet: arm64-windows
-            configFlags: --enable-discord --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx --disable-opengl
+            configFlags: --enable-faad --enable-gif --enable-mikmod --enable-mpeg2 --enable-vpx --disable-opengl
     env:
       CONFIGURATION: Release
       PLATFORM: ${{ matrix.platform }}
@@ -77,10 +77,10 @@ jobs:
         with:
           name: scummvm-${{ matrix.arch }}
           path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.exe
-      - name: Upload scummvm
+      - name: Upload scummvm dlls
         uses: actions/upload-artifact@v4
         with:
-          name: scummvm-${{ matrix.arch }}
+          name: scummvm-${{ matrix.arch }}-dll
           path: build-scummvm/**/*.dll
       - name: Upload scummvm libs
         uses: actions/upload-artifact@v4
