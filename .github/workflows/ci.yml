@@ -81,7 +81,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: scummvm-${{ matrix.arch }}
-          path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}\\bin\\*.dll
+          path: ${{ github.workspace }}/**/*.dll
       - name: Upload scummvm symbols
         uses: actions/upload-artifact@v4
         with:
@@ -91,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: symbols-${{ matrix.arch }}
-          path: ${{ env.VCPKG_INSTALLED_DIR }}\\${{ matrix.triplet }}\\bin\\*.pdb
+          path: ${{ github.workspace }}/**/*.pdb
   xcode:
     name: Xcode
     runs-on: macos-latest
