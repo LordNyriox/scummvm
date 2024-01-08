@@ -36,6 +36,8 @@
 #include "graphics/font.h"
 #include "graphics/fonts/ttf.h"
 
+#include "image/png.h"
+
 namespace Mohawk {
 
 class TransitionEffect {
@@ -281,23 +283,23 @@ public:
 
 			uint alpha = elapsed * 255 / _duration;
 			for (int y = 0; y < _mainScreen->h; y++) {
-				uint16 *src1 = (uint16 *) _mainScreen->getBasePtr(0, y);
-				uint16 *src2 = (uint16 *) _effectScreen->getBasePtr(0, y);
-				uint16 *dst = (uint16 *) screen->getBasePtr(0, y);
+				uint32 *src1 = (uint32 *) _mainScreen->getBasePtr(0, y);
+				uint32 *src2 = (uint32 *) _effectScreen->getBasePtr(0, y);
+				uint32 *dst = (uint32 *) screen->getBasePtr(0, y);
 				for (int x = 0; x < _mainScreen->w; x++) {
 					uint8 r1, g1, b1, r2, g2, b2;
 					_mainScreen->format.colorToRGB(*src1++, r1, g1, b1);
 					_effectScreen->format.colorToRGB(*src2++, r2, g2, b2);
 
-					uint r = r1 * alpha + r2 * (255 - alpha);
-					uint g = g1 * alpha + g2 * (255 - alpha);
-					uint b = b1 * alpha + b2 * (255 - alpha);
+					uint32 r = r1 * alpha + r2 * (255 - alpha);
+					uint32 g = g1 * alpha + g2 * (255 - alpha);
+					uint32 b = b1 * alpha + b2 * (255 - alpha);
 
 					r /= 255;
 					g /= 255;
 					b /= 255;
 
-					*dst++ = (uint16) screen->format.RGBToColor(r, g, b);
+					*dst++ = (uint32) screen->format.RGBToColor(r, g, b);
 				}
 			}
 
@@ -327,16 +329,16 @@ RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) :
 	_bitmapDecoder = new MohawkBitmap();
 
 	// Restrict ourselves to a single pixel format to simplify the effects implementation
-	_pixelFormat = Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0);
-	initGraphics(608, 436, &_pixelFormat);
+	_pixelFormat = Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
+	initGraphics(RIVEN_WIDTH, RIVEN_HEIGHT, &_pixelFormat);
 
 	// The actual game graphics only take up the first 392 rows. The inventory
 	// occupies the rest of the screen and we don't use the buffer to hold that.
 	_mainScreen = new Graphics::Surface();
-	_mainScreen->create(608, 392, _pixelFormat);
+	_mainScreen->create(RIVEN_WIDTH, RIVEN_HEIGHT, _pixelFormat);
 
 	_effectScreen = new Graphics::Surface();
-	_effectScreen->create(608, 392, _pixelFormat);
+	_effectScreen->create(RIVEN_WIDTH, RIVEN_HEIGHT, _pixelFormat);
 
 	if (_vm->isGameVariant(GF_25TH)) {
 		loadMenuFont();
@@ -355,13 +357,15 @@ RivenGraphics::~RivenGraphics() {
 }
 
 MohawkSurface *RivenGraphics::decodeImage(uint16 id) {
-	Common::SeekableReadStream *resourceStream = _vm->getResource(ID_TBMP, id);
-	Common::SeekableReadStream *memResourceStream = resourceStream->readStream(resourceStream->size());
-	delete resourceStream;
+	Image::PNGDecoder png;
+	Common::SeekableReadStream *resource = _vm->getResource(ID_TBMP, id);
+	png.loadStream(*resource);
 
-	MohawkSurface *surface = _bitmapDecoder->decodeImage(memResourceStream);
-	surface->convertToTrueColor();
-	return surface;
+	const Graphics::Surface *source = png.getSurface();
+	Graphics::Surface *surface = new Graphics::Surface();
+	surface->copyFrom(*source);
+	MohawkSurface *mohawkSurface = new MohawkSurface(surface, nullptr, 0, 0);
+	return mohawkSurface;
 }
 
 void RivenGraphics::copyImageToScreen(uint16 image, uint32 left, uint32 top, uint32 right, uint32 bottom) {
@@ -370,8 +374,8 @@ void RivenGraphics::copyImageToScreen(uint16 image, uint32 left, uint32 top, uin
 	beginScreenUpdate();
 
 	// Clip the width to fit on the screen. Fixes some images.
-	if (left + surface->w > 608)
-		surface->w = 608 - left;
+	if (left + surface->w > 608 * RIVEN_SCALE)
+		surface->w = 608 * RIVEN_SCALE - left;
 
 	for (uint16 i = 0; i < surface->h; i++)
 		memcpy(_mainScreen->getBasePtr(left, i + top), surface->getBasePtr(0, i), surface->w * surface->format.bytesPerPixel);
@@ -385,7 +389,7 @@ void RivenGraphics::updateScreen() {
 		// Copy to screen if there's no transition. Otherwise transition.
 		if (_scheduledTransition == kRivenTransitionNone
 		    || _transitionMode == kRivenTransitionModeDisabled) {
-			const Common::Rect updateRect = Common::Rect(0, 0, 608, 392);
+			const Common::Rect updateRect = Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE);
 
 			// mainScreen -> effectScreen -> systemScreen
 			_effectScreen->copyRectToSurface(*_mainScreen, updateRect.left, updateRect.top, updateRect);
@@ -421,10 +425,10 @@ WaterEffect::WaterEffect(MohawkEngine_Riven *vm, uint16 sfxeID) :
 	// Read in header info
 	uint16 frameCount = sfxeStream->readUint16BE();
 	uint32 offsetTablePosition = sfxeStream->readUint32BE();
-	_rect.left = sfxeStream->readUint16BE();
-	_rect.top = sfxeStream->readUint16BE();
-	_rect.right = sfxeStream->readUint16BE();
-	_rect.bottom = sfxeStream->readUint16BE();
+	_rect.left = sfxeStream->readUint16BE() * RIVEN_SCALE;
+	_rect.top = sfxeStream->readUint16BE() * RIVEN_SCALE;
+	_rect.right = sfxeStream->readUint16BE() * RIVEN_SCALE;
+	_rect.bottom = sfxeStream->readUint16BE() * RIVEN_SCALE;
 	_speed = sfxeStream->readUint16BE();
 	// Skip the rest of the fields...
 
@@ -463,20 +467,28 @@ void WaterEffect::update() {
 	assert(screen->format == mainScreen->format);
 
 	// Run script
+	bool isOddRow = false;
 	uint16 curRow = 0;
 	for (uint16 op = script->readUint16BE(); op != 4; op = script->readUint16BE()) {
 		if (op == 1) {        // Increment Row
-			curRow++;
+			curRow += 2;
+			if (isOddRow) {
+				curRow++;
+			}
+			isOddRow = !isOddRow;
 		} else if (op == 3) { // Copy Pixels
-			uint16 dstLeft = script->readUint16BE();
-			uint16 srcLeft = script->readUint16BE();
-			uint16 srcTop = script->readUint16BE();
-			uint16 rowWidth = script->readUint16BE();
+			uint16 dstLeft = script->readUint16BE() * RIVEN_SCALE;
+			uint16 srcLeft = script->readUint16BE() * RIVEN_SCALE;
+			uint16 srcTop = script->readUint16BE() * RIVEN_SCALE;
+			uint16 rowWidth = script->readUint16BE() * RIVEN_SCALE;
+			uint16 rowHeight = !isOddRow ? 2 : 3;
 
-			byte *src = (byte *)mainScreen->getBasePtr(srcLeft, srcTop);
-			byte *dst = (byte *)screen->getBasePtr(dstLeft, curRow + _rect.top);
+			for (int offset = 0; offset < rowHeight; offset++) {
+				byte *src = (byte *)mainScreen->getBasePtr(srcLeft, srcTop + offset);
+				byte *dst = (byte *)screen->getBasePtr(dstLeft, curRow + _rect.top + offset);
 
-			memcpy(dst, src, rowWidth * screen->format.bytesPerPixel);
+				memcpy(dst, src, rowWidth * screen->format.bytesPerPixel);
+			}
 		} else if (op != 4) { // End of Script
 			error ("Unknown SFXE opcode %d", op);
 		}
@@ -503,15 +515,15 @@ void RivenGraphics::setTransitionMode(RivenTransitionMode mode) {
 	_transitionMode = mode;
 	switch (_transitionMode) {
 		case kRivenTransitionModeFastest:
-			_transitionFrames   = 8;
+			_transitionFrames   = 4;
 			_transitionDuration = 300;
 			break;
 		case kRivenTransitionModeNormal:
-			_transitionFrames   = 16;
+			_transitionFrames   = 8;
 			_transitionDuration = 500;
 			break;
 		case kRivenTransitionModeBest:
-			_transitionFrames   = 32;
+			_transitionFrames   = 16;
 			_transitionDuration = 700;
 			break;
 		case kRivenTransitionModeDisabled:
@@ -609,7 +621,7 @@ void RivenGraphics::runScheduledTransition() {
 }
 
 void RivenGraphics::clearMainScreen() {
-	_mainScreen->fillRect(Common::Rect(0, 0, 608, 392), _pixelFormat.RGBToColor(0, 0, 0));
+	_mainScreen->fillRect(Common::Rect(0, 0, 608 * RIVEN_SCALE, 392 * RIVEN_SCALE), _pixelFormat.RGBToColor(255, 254, 0));
 }
 
 void RivenGraphics::fadeToBlack() {
@@ -621,13 +633,15 @@ void RivenGraphics::fadeToBlack() {
 }
 
 void RivenGraphics::drawExtrasImageToScreen(uint16 id, const Common::Rect &rect) {
-	MohawkSurface *mhkSurface = _bitmapDecoder->decodeImage(_vm->getExtrasResource(ID_TBMP, id));
-	mhkSurface->convertToTrueColor();
-	Graphics::Surface *surface = mhkSurface->getSurface();
+	Image::PNGDecoder png;
+	Common::SeekableReadStream *resource = _vm->getExtrasResource(ID_TBMP, id);
+	png.loadStream(*resource);
+
+	const Graphics::Surface *source = png.getSurface();
+	Graphics::Surface *surface = new Graphics::Surface();
+	surface->copyFrom(*source);
 
 	_vm->_system->copyRectToScreen(surface->getPixels(), surface->pitch, rect.left, rect.top, surface->w, surface->h);
-
-	delete mhkSurface;
 }
 
 void RivenGraphics::drawRect(const Common::Rect &rect, bool active) {
@@ -881,7 +895,7 @@ FliesEffect::FliesEffect(MohawkEngine_Riven *vm, uint16 count, bool fireflies) :
 
 	_effectSurface = _vm->_gfx->getEffectScreen();
 	_backSurface = _vm->_gfx->getBackScreen();
-	_gameRect = Common::Rect(608, 392);
+	_gameRect = Common::Rect(608 * RIVEN_SCALE, 392 * RIVEN_SCALE);
 
 	if (fireflies) {
 		_parameters = &_firefliesParameters;

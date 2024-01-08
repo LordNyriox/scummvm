@@ -39,6 +39,7 @@ Archive::~Archive() {
 }
 
 bool Archive::openFile(const Common::String &fileName) {
+	_fileName = fileName;
 	Common::File *file = new Common::File();
 
 	if (!file->open(fileName)) {
@@ -79,6 +80,21 @@ bool Archive::hasResource(uint32 tag, const Common::String &resName) const {
 	return false;
 }
 
+Common::String Archive::getReplacementPath(uint32 tag, uint16 id) {
+	char *ext;
+	switch (tag) {
+		case ID_TBMP:
+			ext = "png";
+			break;
+		case ID_TMOV:
+			ext = "mov";
+			break;
+		default:
+			ext = "bin";
+	}
+	return Common::String::format("./data/%s/%s/%d.%s", getFileName().c_str(), tag2str(tag), id, ext);
+}
+
 Common::SeekableReadStream *Archive::getResource(uint32 tag, uint16 id) {
 	if (!_types.contains(tag))
 		error("Archive does not contain '%s' %04x", tag2str(tag), id);
@@ -87,6 +103,14 @@ Common::SeekableReadStream *Archive::getResource(uint32 tag, uint16 id) {
 
 	if (!resMap.contains(id))
 		error("Archive does not contain '%s' %04x", tag2str(tag), id);
+
+	if (tag == ID_TBMP || (tag == ID_TMOV && id == 0)) {
+		Common::String replacementPath = getReplacementPath(tag, id);
+		Common::File *f = new Common::File();
+		bool exists = f->open(Common::FSNode(replacementPath));
+		if (!exists) error("Missing image: %s", replacementPath.c_str());
+		return f;
+	}
 
 	const Resource &res = resMap[id];
 
