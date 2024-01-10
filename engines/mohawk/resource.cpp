@@ -25,6 +25,7 @@
 #include "common/substream.h"
 #include "common/util.h"
 #include "common/textconsole.h"
+#include "common/unzip.h"
 
 namespace Mohawk {
 
@@ -50,7 +51,14 @@ bool Archive::openFile(const Common::String &fileName) {
 		close();
 		return false;
 	}
+	ArchiveName = fileName;
+	ArchiveName.replace(ArchiveName.size() - 4, 1, "-");
+	SearchMan.addDirectory(ArchiveName, "./" + ArchiveName + "/", 100, 2);
 
+	Common::Archive *zip = Common::makeZipArchive(ArchiveName + ".zip");
+
+	if (zip)
+		SearchMan.add(ArchiveName, zip, 99);
 	return true;
 }
 
@@ -90,6 +98,21 @@ Common::SeekableReadStream *Archive::getResource(uint32 tag, uint16 id) {
 
 	const Resource &res = resMap[id];
 
+	if (tag == ID_TBMP) {
+
+		Common::String ResName = getName(tag, id);
+		Common::String ResId = Common::String::format("%d", id);
+
+		Common::File *file = new Common::File();
+
+		warning(Common::String::format("Loading ResId: %s", ResId.c_str()).c_str());
+		warning(Common::String::format("ResName: %s", ResName.c_str()).c_str());
+		if ((ResName != "" && file->open(ResName)) || file->open(ResId)) {
+			return file;
+		} else {
+			delete file;
+		}
+	}
 	return new Common::SeekableSubReadStream(_stream, res.offset, res.offset + res.size);
 }
 

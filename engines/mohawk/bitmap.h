@@ -28,6 +28,7 @@
 #include "common/stream.h"
 #include "common/array.h"
 #include "graphics/surface.h"
+#include "image/png.h"
 
 namespace Mohawk {
 
@@ -51,6 +52,7 @@ enum BitmapFormat {
 	kPackLZ = 0x0100,
 	kPackLZ1 = 0x0200,
 	kPackRiven = 0x0400,
+	kPackPNG = 0x0500,
 	kPackXDec = 0x0f00,
 	kFlagMASK = 0xf000,
 	kFlag16_80X86 = 0x1000, // 16 bit pixel data has been converted to 80X86 format
@@ -109,6 +111,7 @@ private:
 	void unpackRaw();
 	void unpackLZ();
 	void unpackRiven();
+	void unpackPNG();
 
 	// An unpacker
 	struct PackFunction {
@@ -129,6 +132,7 @@ private:
 	int _packTableSize;
 	const DrawFunction *_drawTable;
 	int _drawTableSize;
+	Image::PNGDecoder* png;
 
 	// Unpack/Draw helpers
 	const char *getPackName();

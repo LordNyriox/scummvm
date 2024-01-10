@@ -29,6 +29,7 @@
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "image/bmp.h"
+#include "image/png.h"
 
 namespace Mohawk {
 
@@ -39,7 +40,8 @@ MohawkBitmap::MohawkBitmap() {
 	static const PackFunction packTable[] = {
 		{ kPackNone, "Raw", &MohawkBitmap::unpackRaw },
 		{ kPackLZ, "LZ", &MohawkBitmap::unpackLZ },
-		{ kPackRiven, "Riven", &MohawkBitmap::unpackRiven }
+		{ kPackRiven, "Riven", &MohawkBitmap::unpackRiven },
+		{ kPackPNG, "PNG", &MohawkBitmap::unpackPNG }
 	};
 
 	_packTable = packTable;
@@ -65,6 +67,7 @@ MohawkBitmap::MohawkBitmap() {
 }
 
 MohawkBitmap::~MohawkBitmap() {
+
 }
 
 void MohawkBitmap::decodeImageData(Common::SeekableReadStream *stream) {
@@ -105,7 +108,10 @@ MohawkSurface *MohawkBitmap::decodeImage(Common::SeekableReadStream *stream) {
 
 	Graphics::Surface *surface = createSurface(_header.width, _header.height);
 	drawImage(surface);
-	delete _data;
+	if (_data)
+		delete _data;
+	if (png)
+		delete png;
 
 	return new MohawkSurface(surface, _header.colorTable.palette);
 }
@@ -362,6 +368,15 @@ void MohawkBitmap::unpackRiven() {
 	_data = new Common::MemoryReadStream(uncompressedData, _header.bytesPerRow * _header.height, DisposeAfterUse::YES);
 }
 
+void MohawkBitmap::unpackPNG() {
+
+	png = new Image::PNGDecoder();
+	png->setSkipSignature(true);
+	png->loadStream(*_data);
+	delete _data;
+	_data = nullptr;
+}
+
 static byte getLastTwoBits(byte c) {
 	return (c & 0x03);
 }
@@ -573,24 +588,35 @@ void MohawkBitmap::handleRivenSubcommandStream(byte count, byte *&dst) {
 void MohawkBitmap::drawRaw(Graphics::Surface *surface) {
 	assert(surface);
 
-	for (uint16 y = 0; y < _header.height; y++) {
-		if (getBitsPerPixel() == 24) {
-			Graphics::PixelFormat pixelFormat = g_system->getScreenFormat();
-
-			for (uint16 x = 0; x < _header.width; x++) {
-				byte b = _data->readByte();
-				byte g = _data->readByte();
-				byte r = _data->readByte();
-				if (surface->format.bytesPerPixel == 2)
-					*((uint16 *)surface->getBasePtr(x, y)) = pixelFormat.RGBToColor(r, g, b);
-				else
-					*((uint32 *)surface->getBasePtr(x, y)) = pixelFormat.RGBToColor(r, g, b);
-			}
-
-			_data->skip(_header.bytesPerRow - _header.width * 3);
+	if (png) {
+		if (surface->format == png->getSurface()->format) {
+			surface->copyFrom(*png->getSurface());
 		} else {
-			_data->read((byte *)surface->getBasePtr(0, y), _header.width);
-			_data->skip(_header.bytesPerRow - _header.width);
+			Graphics::Surface *newSurface = png->getSurface()->convertTo(surface->format, png->getPalette());
+			surface->copyFrom(*newSurface);
+			newSurface->free();
+			delete newSurface;
+		}
+	} else {
+		for (uint16 y = 0; y < _header.height; y++) {
+			if (getBitsPerPixel() == 24) {
+				Graphics::PixelFormat pixelFormat = g_system->getScreenFormat();
+
+				for (uint16 x = 0; x < _header.width; x++) {
+					byte b = _data->readByte();
+					byte g = _data->readByte();
+					byte r = _data->readByte();
+					if (surface->format.bytesPerPixel == 2)
+						*((uint16 *)surface->getBasePtr(x, y)) = pixelFormat.RGBToColor(r, g, b);
+					else
+						*((uint32 *)surface->getBasePtr(x, y)) = pixelFormat.RGBToColor(r, g, b);
+				}
+
+				_data->skip(_header.bytesPerRow - _header.width * 3);
+			} else {
+				_data->read((byte *)surface->getBasePtr(0, y), _header.width);
+				_data->skip(_header.bytesPerRow - _header.width);
+			}
 		}
 	}
 }
