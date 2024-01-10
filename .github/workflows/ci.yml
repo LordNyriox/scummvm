@@ -15,13 +15,13 @@ jobs:
           - platform: win32
             triplet: x86-windows
             arch: x86
-           configFlags: --enable-discord --enable-faad --enable-gif --enable-mpeg2
+            configFlags: --enable-discord --enable-faad --enable-gif --enable-mpeg2
             vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype fribidi giflib glew libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib'
             useNasm: 'true'
           - platform: x64
             arch: x64
             triplet: x64-windows
-           configFlags: --enable-discord --enable-faad --enable-gif --enable-mpeg2
+            configFlags: --enable-discord --enable-faad --enable-gif --enable-mpeg2
             vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype fribidi giflib glew libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib'
           - platform: arm64
             arch: arm64
