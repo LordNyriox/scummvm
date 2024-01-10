@@ -66,8 +66,8 @@ void RivenVideo::load(uint16 id) {
 	_video->setChunkBeginOffset(_vm->getResourceOffset(ID_TMOV, id));
 	_video->loadStream(_vm->getResource(ID_TMOV, id));
 	_video->enableEditListBoundsCheckQuirk(true); // for Spanish olw.mov
-	if (Scaler)
-		Scaler->initialize(_video->getPixelFormat());
+	if (_scaler)
+		_scaler->initialize(_video->getPixelFormat());
 }
 
 void RivenVideo::close() {
@@ -221,12 +221,12 @@ void *RivenVideo::ScaleFrame(const void *Pixels, int Pitch, int Height, int Byte
 	BufferB.reserve(Size);
 	if (Scaler) {
 		if (Scaler->hasFactor(Riven_Scale)) {
-			Scaler->setFactor(Riven_Scale);
-			Scaler->scale((const uint8*)Pixels, Pitch, BufferA.data(), Pitch * Riven_Scale, srcWidth, srcHeight, 0, 0);
+			_scaler->setFactor(Riven_Scale);
+			_scaler->scale((const uint8*)Pixels, Pitch, BufferA.data(), Pitch * Riven_Scale, srcWidth, srcHeight, 0, 0);
 			return BufferA.data();
 		} else if ((Riven_Scale % 2 == 0) && (Scaler->hasFactor(2))) {
-			Scaler->setFactor(2);
-			Scaler->scale((const uint8 *)Pixels, srcPitch, BufferA.data(), srcPitch * 2, srcWidth, srcHeight, 0, 0);
+			_scaler->setFactor(2);
+			_scaler->scale((const uint8 *)Pixels, srcPitch, BufferA.data(), srcPitch * 2, srcWidth, srcHeight, 0, 0);
 			srcPitch *= 2;
 			srcWidth *= 2;
 			srcHeight *= 2;
@@ -234,7 +234,7 @@ void *RivenVideo::ScaleFrame(const void *Pixels, int Pitch, int Height, int Byte
 			uint8 *dest = BufferB.data();
 			for (int i = 1; i < Riven_Scale / 2; i++) {
 
-				Scaler->scale(src, srcPitch, dest, srcPitch * 2, srcWidth, srcHeight, 0, 0);
+				_scaler->scale(src, srcPitch, dest, srcPitch * 2, srcWidth, srcHeight, 0, 0);
 				srcPitch *= 2;
 				srcWidth *= 2;
 				srcHeight *= 2;
