@@ -25,7 +25,7 @@
 #include "common/substream.h"
 #include "common/util.h"
 #include "common/textconsole.h"
-#include "common/unzip.h"
+#include "common/compression/unzip.h"
 
 namespace Mohawk {
 
